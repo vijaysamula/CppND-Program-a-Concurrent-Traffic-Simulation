@@ -23,7 +23,8 @@ void MessageQueue<T>::send(T &&msg)
 {
     
     std::lock_guard<std::mutex> lGuard(_mutex);
-    _queue.push_back(std::move(msg));
+    _queue.clear();
+    _queue.emplace_back(std::move(msg));
     _cond.notify_one();
 
 }
@@ -63,8 +64,9 @@ void TrafficLight::simulate()
 // virtual function which is executed in a thread
 void TrafficLight::cycleThroughPhases()
 {
+    long timeSinceLastUpdate= 0;
     std::random_device rndm;
-    std::mt19937 mt(rndm());
+    static std::mt19937 mt(rndm());
     std::uniform_real_distribution<double> uDist(4000.0, 6000.0);
     auto cycleDuration = std::chrono::duration<double>(uDist(mt));
     std::chrono::time_point<std::chrono::system_clock> lastUpdate;
@@ -72,10 +74,10 @@ void TrafficLight::cycleThroughPhases()
     lastUpdate = std::chrono::system_clock::now();
     while(true){
         // sleep at every iteration to reduce CPU usage
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         // compute time difference to stop watch
-        long timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - lastUpdate).count();
+        timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - lastUpdate).count();
         if (timeSinceLastUpdate >= cycleDuration.count())
         {   
             
